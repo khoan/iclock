@@ -8,12 +8,23 @@
       background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAABJJREFUCB1jYGBg+A/ExAHsKgFV7gH/ssPq5wAAAABJRU5ErkJggg==) repeat;
     }
 
+    .clock {
+      width: 400px;
+      height: 400px;
+      stroke: black;
+      stroke-linecap: round;
+      fill: #4aa2ef;
+    }
+
     .dial {
-      stroke-width: 2px;
+      stroke-width: 0.5;
       stroke: #fff;
     }
+    .ticks {
+      stroke-width: 1;
+    }
     .hour, .min, .sec {
-      stroke-width: 1px;
+      stroke-width: 1;
       fill: #333;
       stroke: #555;
     }
@@ -24,7 +35,23 @@
 </head>
 <body>
   <svg id="three" class="clock" viewBox="0 0 100 100">
-    <circle class="dial" cx="50" cy="50" r="45"/>
+    <circle class="dial" cx="50" cy="50" r="45" />
+
+    <g class="ticks">
+      <line class="_12_" x1="50" y1="5.000" x2="50.00" y2="10.00" />
+      <line class="_1_" x1="72.50" y1="11.03" x2="70.00" y2="15.36" />
+      <line class="_2_" x1="88.97" y1="27.50" x2="84.64" y2="30.00" />
+      <line class="_3_" x1="95.00" y1="50.00" x2="90.00" y2="50.00" />
+      <line class="_4_" x1="88.97" y1="72.50" x2="84.64" y2="70.00" />
+      <line class="_5_" x1="72.50" y1="88.97" x2="70.00" y2="84.64" />
+      <line class="_6_" x1="50.00" y1="95.00" x2="50.00" y2="90.00" />
+      <line class="_7_" x1="27.50" y1="88.97" x2="30.00" y2="84.64" />
+      <line class="_8_" x1="11.03" y1="72.50" x2="15.36" y2="70.00" />
+      <line class="_9_" x1="5.000" y1="50.00" x2="10.00" y2="50.00" />
+      <line class="_10_" x1="11.03" y1="27.50" x2="15.36" y2="30.00" />
+      <line class="_11_" x1="27.50" y1="11.03" x2="30.00" y2="15.36" />
+    </g>
+
     <g class="hands">
       <rect class="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
       <rect class="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2"/>
@@ -54,7 +81,50 @@
   </ul>
 
   <script>
-    (function() {
+    var iClock = {
+      state: {},
+
+      register: function(proto) {
+        if (this.hasOwnProperty(proto.name)) {
+          throw("Error: name clash, "+proto.name+" already defined");
+        }
+        iClock[proto.name] = proto;
+      },
+
+      start: function() {
+        var movement = new iClock.Movement;
+        new iClock.Clock('#one', 1, movement);
+        new iClock.Clock('#two', 2, movement);
+        new iClock.Clock('#three', 3, movement);
+        movement.start();
+        this.state.movement = movement;
+      }
+    };
+
+    iClock.register(
+      /*
+      sin(theta) = (y-50)/50
+      cos(theta) = (x-50)/50
+
+      hour  tick  theta (degree)
+      12    60    -90
+      1     5     -60
+      2     10    -30
+      3     15    0
+      4     20    30
+      5     25    60
+      6     30    90
+      7     35    120
+      8     40    150
+      9     45    180
+      10    50    -150
+      11    55    -120
+      */
+      function Dial() {
+      }
+    );
+
+    iClock.register(
       function Movement(epoch, tock, undef) {
         this.engine = undef;
 
@@ -92,7 +162,9 @@
           clearInterval(this.engine);
         };
       }
+    );
 
+    iClock.register(
       function Clock(el, handCount, movement, undef) {
         var tool = {
           $: function(sel, node) {
@@ -138,14 +210,9 @@
         this.movement = movement;
         this.movement.power(this);
       }
+    );
 
-      var movement = new Movement;
-      new Clock('#one', 1, movement);
-      new Clock('#two', 2, movement);
-      new Clock('#three', 3, movement);
-      movement.start();
-      window.movement = movement;
-    })();
+    iClock.start();
   </script>
 </body>
 </html>
