@@ -2,16 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title></title>
+  <title>iClock</title>
+  <style>
+    body {
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAABJJREFUCB1jYGBg+A/ExAHsKgFV7gH/ssPq5wAAAABJRU5ErkJggg==) repeat;
+    }
+
+    .dial {
+      stroke-width: 2px;
+      stroke: #fff;
+    }
+    .hour, .min, .sec {
+      stroke-width: 1px;
+      fill: #333;
+      stroke: #555;
+    }
+    .sec {
+      stroke: #f55;
+    }
+  </style>
 </head>
 <body>
-  <svg id="clock" viewBox="0 0 100 100">
-    <circle id="face" cx="50" cy="50" r="45"/>
-    <g id="hands">
-      <rect id="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
-      <rect id="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2"/>
-      <line id="sec" x1="50" y1="50" x2="50" y2="16" />
+  <svg id="three" class="clock" viewBox="0 0 100 100">
+    <circle class="dial" cx="50" cy="50" r="45"/>
+    <g class="hands">
+      <rect class="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
+      <rect class="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2"/>
+      <line class="sec" x1="50" y1="50" x2="50" y2="16" />
     </g>
+  </svg>
+
+  <svg id="two" class="clock" viewBox="0 0 100 100">
+    <circle class="dial" cx="50" cy="50" r="45"/>
+    <g class="hands">
+      <rect class="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
+      <rect class="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2" />
+    </g>
+  </svg>
+
+  <svg id="one" class="clock" viewBox="0 0 100 100">
+    <circle class="dial" cx="50" cy="50" r="45" />
+    <line class="hour" x1="50" y1="50" x2="50" y2="16" />
   </svg>
 
   <h3>References</h3>
@@ -21,5 +52,100 @@
     <li>https://gist.github.com/janx/1188550</li>
     <li>https://jsfiddle.net/MrPolywhirl/znene4g5/</li>
   </ul>
+
+  <script>
+    (function() {
+      function Movement(epoch, tock, undef) {
+        this.engine = undef;
+
+        this.epoch = (epoch || Date.now());
+        this.time = new Date;
+
+        this.clocks = [];
+        this.power = function(clock) {
+          this.clocks.push(clock);
+        }
+
+        this.tock = (tock || 1000);
+        this.tick = function(tock) {
+          this.epoch += (tock || this.tock);
+          this.time.setTime(this.epoch);
+          return this.time;
+        }
+
+        this.start = function() {
+          this.engine = setInterval(
+              function(self) {
+                var time = self.tick();
+                var clock;
+
+                for (clock of self.clocks) {
+                  clock['update'].call(clock, time);
+                }
+              },
+              this.tock,
+              this
+          );
+          return this.engine;
+        };
+        this.stop = function() {
+          clearInterval(this.engine);
+        };
+      }
+
+      function Clock(el, handCount, movement, undef) {
+        var tool = {
+          $: function(sel, node) {
+            return (node || document).querySelector(sel);
+          },
+          rotate: function(el, deg) {
+            if (el && deg) {
+              el.setAttribute('transform', 'rotate('+deg+' 50 50)');
+            }
+          }
+        };
+
+        this.el = {
+          clock: undef,
+          hands: {
+            hour: undef,
+            minute: undef,
+            second: undef,
+          }
+        };
+        this.el.clock = (function(el, t) {
+          var type = typeof el;
+          if (type === "string") {
+            return t.$(el);
+          } else if (type === "object") {
+            return el;
+          }
+        })(el, tool);
+        this.el.hands.hour = tool.$(".hour", this.el.clock);
+        this.el.hands.minute = tool.$(".min", this.el.clock);
+        this.el.hands.second = tool.$(".sec", this.el.clock);
+
+        this.update = function(time) {
+          if (this.el.hands.second) {
+            tool.rotate(this.el.hands.second, 6*time.getSeconds());
+            tool.rotate(this.el.hands.minute, 6*time.getMinutes());
+            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2);
+          } else if (this.el.hands.minute) {
+          } else if (this.el.hands.hour) {
+          }
+        }
+
+        this.movement = movement;
+        this.movement.power(this);
+      }
+
+      var movement = new Movement;
+      new Clock('#one', 1, movement);
+      new Clock('#two', 2, movement);
+      new Clock('#three', 3, movement);
+      movement.start();
+      window.movement = movement;
+    })();
+  </script>
 </body>
 </html>
