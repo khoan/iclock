@@ -13,7 +13,7 @@
       height: 400px;
       stroke: black;
       stroke-linecap: round;
-      fill: #4aa2ef;
+      fill: #fff;
     }
 
     .bezel {
@@ -30,12 +30,19 @@
       stroke-width: 0.3;
     }
     .hour, .min, .sec {
-      stroke-width: 1;
-      fill: #333;
-      stroke: #555;
+      stroke-width: 0.5;
+      fill: none;
     }
     .sec {
       stroke: #f55;
+    }
+    .tritium {
+      stroke: #000;
+      fill: #000;
+    }
+    #three .tritium {
+      stroke: #f55;
+      fill: #f55;
     }
   </style>
 </head>
@@ -106,17 +113,22 @@
       <line class="_11_59_ mm" x1="45.36938907724296" y1="5.942680035185489" x2="45.60980454275856" y2="8.230080394532514" />
     </g>
 
-    <g id="numbers">
+    <g class="numbers">
       <text x="42" y="23">12</text>
       <text x="80" y="55">3</text>
       <text x="46" y="87">6</text>
       <text x="13" y="55">9</text>
     </g>
 
+    <g class="aperture">
+      Mon, 26 Apr
+    </g>
+
     <g class="hands">
-      <rect class="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
-      <rect class="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2"/>
+      <path class="hour" d="M 50,50 l 0,-5 l -1.7,-1.7 l 0,-11 l 1.7,-1.7 l 0,-7 m 0,7 l 1.7,1.7 l 0,11 l -1.7,1.7" />
+      <path class="min" d="M 50,50 l 0,-3 l -1,-1 l 0,-16 l 1,-1 l 0,-12 m 0,12 l 1,1 l 0,16 l -1,1" />
       <line class="sec" x1="50" y1="50" x2="50" y2="16" />
+      <circle class="tritium" cx="50" cy="50" r="1" />
     </g>
   </svg>
 
@@ -186,7 +198,7 @@
       <line class="_11_59_ mm" x1="45.36938907724296" y1="5.942680035185489" x2="45.60980454275856" y2="8.230080394532514" />
     </g>
 
-    <g id="numbers">
+    <g class="numbers">
       <text x="42" y="23">12</text>
       <text x="80" y="55">3</text>
       <text x="46" y="87">6</text>
@@ -194,8 +206,9 @@
     </g>
 
     <g class="hands">
-      <rect class="hour" x="48.5" y="12.5" width="5" height="40" rx="2.5" ry="2.55" />
-      <rect class="min" x="48" y="12.5" width="3" height="40" rx="2" ry="2" />
+      <path class="hour" d="M 50,50 l 0,-5 l -1.7,-1.7 l 0,-11 l 1.7,-1.7 l 0,-7 m 0,7 l 1.7,1.7 l 0,11 l -1.7,1.7" />
+      <path class="min" d="M 50,50 l 0,-3 l -1,-1 l 0,-16 l 1,-1 l 0,-12 m 0,12 l 1,1 l 0,16 l -1,1" />
+      <circle class="tritium" cx="50" cy="50" r="1" />
     </g>
   </svg>
 
@@ -217,14 +230,17 @@
       <line class="_11_ hh" x1="27.85" y1="11.635074612349364" x2="30.00" y2="15.36" />
     </g>
 
-    <g id="numbers">
+    <g class="numbers">
       <text x="42" y="23">12</text>
       <text x="80" y="55">3</text>
       <text x="46" y="87">6</text>
       <text x="13" y="55">9</text>
     </g>
 
-    <line class="hour" x1="50" y1="50" x2="50" y2="16" />
+    <g class="hands">
+      <line class="hour" x1="50" y1="50" x2="50" y2="12" />
+      <circle class="tritium" cx="50" cy="50" r="1" />
+    </g>
   </svg>
 
   <h3>References</h3>
@@ -363,9 +379,9 @@
           $: function(sel, node) {
             return (node || document).querySelector(sel);
           },
-          rotate: function(el, deg) {
+          rotate: function(el, deg, x, y) {
             if (el) {
-              el.setAttribute('transform', 'rotate('+deg+' 50 50)');
+              el.setAttribute('transform', `rotate(${deg} ${x} ${y})`);
             }
           }
         };
@@ -390,16 +406,20 @@
         this.el.hands.minute = tool.$(".min", this.el.clock);
         this.el.hands.second = tool.$(".sec", this.el.clock);
 
+        // TODO derive from viewBox dimension
+        this.centerX = 50;
+        this.centerY = 50;
+
         this.update = function(time) {
           if (this.el.hands.second) {
-            tool.rotate(this.el.hands.second, 6*time.getSeconds());
-            tool.rotate(this.el.hands.minute, 6*time.getMinutes());
-            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2);
+            tool.rotate(this.el.hands.second, 6*time.getSeconds(), this.centerX, this.centerY);
+            tool.rotate(this.el.hands.minute, 6*time.getMinutes(), this.centerX, this.centerY);
+            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2, this.centerX, this.centerY);
           } else if (this.el.hands.minute) {
-            tool.rotate(this.el.hands.minute, 6*time.getMinutes());
-            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2);
+            tool.rotate(this.el.hands.minute, 6*time.getMinutes(), this.centerX, this.centerY);
+            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2, this.centerX, this.centerY);
           } else if (this.el.hands.hour) {
-            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2);
+            tool.rotate(this.el.hands.hour, 30*(time.getHours()%12) + time.getMinutes()/2, this.centerX, this.centerY);
           }
         }
 
